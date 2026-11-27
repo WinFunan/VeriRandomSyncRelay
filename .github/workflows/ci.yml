@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: |
+            **/*.csproj
+            NuGet.config
+
+      - name: Restore
+        run: dotnet restore VeriRandomSyncRelay.slnx
+
+      - name: Build
+        run: dotnet build VeriRandomSyncRelay.slnx -c Release --no-restore
+
+      - name: Test
+        run: >
+          dotnet test VeriRandomSyncRelay.slnx
+          -c Release
+          --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+          if-no-files-found: ignore
+
+      - name: Publish server
+        run: >
+          dotnet publish src/VeriRandomSyncRelay.Server/VeriRandomSyncRelay.Server.csproj
+          -c Release
+          -o artifacts/server
+          --no-restore
+
+      - name: Upload server artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: verirandom-sync-relay-server
+          path: artifacts/server
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t verirandom-sync-relay:ci .

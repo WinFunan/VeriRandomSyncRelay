@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VeriRandomSyncRelay.Cli/VeriRandomSyncRelay.Cli.csproj" />
+    <Project Path="src/VeriRandomSyncRelay.Crypto/VeriRandomSyncRelay.Crypto.csproj" />
+    <Project Path="src/VeriRandomSyncRelay.Server/VeriRandomSyncRelay.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/VeriRandomSyncRelay.Tests/VeriRandomSyncRelay.Tests.csproj" />
+  </Folder>
+</Solution>
